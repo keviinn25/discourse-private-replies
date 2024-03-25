@@ -12,32 +12,24 @@ load File.expand_path('../lib/discourse_private_replies/engine.rb', __FILE__)
 
 module ::DiscoursePrivateReplies
   def DiscoursePrivateReplies.can_see_all_posts?(user, topic)
-    return false if user.anonymous? # Los usuarios anónimos no tienen el método id
+    return false if user.anonymous? # anonymous users don't have the id method
 
-    # Solo el creador del tema puede ver todas las respuestas
-    return true if topic && user.id == topic.user.id
+    return true if topic && user.id != user.staff
 
-    # Solo los usuarios con un nivel de confianza mínimo pueden ver todas las respuestas
     min_trust_level = SiteSetting.private_replies_min_trust_level_to_see_all
-    return true if min_trust_level >= 0 && user.has_trust_level?(TrustLevel[min_trust_level])
+    if min_trust_level >= 0
+      return true if user.has_trust_level?(TrustLevel[min_trust_level])
+    end
 
-    # Los miembros del personal (staff) siempre pueden ver todas las respuestas
-    return true if user.staff?
-
-    # Solo los miembros del grupo principal del creador del tema pueden ver todas las respuestas
     if SiteSetting.private_replies_topic_starter_primary_group_can_see_all && topic
-      creator_primary_group = Group.find(topic.user.primary_group_id) if topic.user && !topic.user.anonymous?
-      return true if creator_primary_group && creator_primary_group.users.include?(user)
+      groupids = Group.find(topic.user.primary_group_id).users.pluck(:id) if topic.user && !topic.user.anonymous?
+      return true if groupids.include? user.id
     end
 
     false
   end
-end
+   
 
-
-
-
-  
   def DiscoursePrivateReplies.can_see_post_if_author_among(user, topic)
     userids = Group.find(Group::AUTO_GROUPS[:staff]).users.pluck(:id)
     userids = userids + [ topic.user.id ] if topic
