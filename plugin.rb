@@ -14,7 +14,7 @@ module ::DiscoursePrivateReplies
   def DiscoursePrivateReplies.can_see_all_posts?(user, topic)
     return false if user.anonymous? # anonymous users don't have the id method
 
-    return true if topic && user.id != user.staff
+    return true if topic && user.id == user.staff
 
     min_trust_level = SiteSetting.private_replies_min_trust_level_to_see_all
     if min_trust_level >= 0
