@@ -6,7 +6,7 @@ module DiscoursePrivateReplies
 
     def enable
       t = Topic.find(params[:topic_id])
-      if current_user.id == t.user_id || current_user.staff?
+      if current_user.id == current_user.staff?
         t.custom_fields['private_replies'] = true
         t.save!
         render json: { private_replies_enabled: true }
@@ -17,7 +17,7 @@ module DiscoursePrivateReplies
 
     def disable
       t = Topic.find(params[:topic_id])
-      if current_user.id == t.user_id || current_user.staff?
+      if current_user.id == current_user.staff?
         t.custom_fields['private_replies'] = false
         t.save!
         render json: { private_replies_enabled: false }
